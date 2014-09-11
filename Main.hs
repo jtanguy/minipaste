@@ -28,6 +28,13 @@ import           Text.Highlighting.Kate
 import           Web.Scotty
 import qualified Web.Scotty                         as S
 
+initTable :: Query
+initTable = "create table if not exists paste (
+    pasteId uuid primary key,
+    pasteContents Text not null,
+    pasteLang Text not null
+);"
+
 data Paste = Paste { pasteId      :: UUID
                    , pasteLang    :: String
                    , pasteContent :: B.ByteString
@@ -77,6 +84,7 @@ main = do
             exitFailure
         Just i -> do
             conn <- connect i
+            _ <- execute initTable
             scotty 8080 $ do
                 get "/:uid" $ do
                     u <- param "uid"
