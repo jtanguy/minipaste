@@ -31,9 +31,9 @@ import qualified Web.Scotty                         as S
 
 initTable :: Query
 initTable = "create table if not exists paste (\
-\   pasteId uuid primary key,\
-\   pasteContents Text not null,\
-\   pasteLang Text not null);"
+\   paste_id uuid primary key,\
+\   lang Text not null\
+\   contents Text not null,);"
 
 data Paste = Paste { pasteId      :: UUID
                    , pasteLang    :: String
@@ -47,10 +47,12 @@ nsMinipaste :: UUID
 nsMinipaste = UUID.generateNamed UUID.namespaceURL (B.unpack "github.com/jtanguy/minipaste")
 
 getPaste :: Connection -> UUID -> IO (Maybe Paste)
-getPaste conn uid = listToMaybe <$> query conn "select * from paste where pasteId = ?" (Only uid)
+getPaste conn uid = listToMaybe <$> query conn q (Only uid)
+  where q = "select * from paste where paste_id = ?"
 
 postPaste :: Connection -> Paste -> IO ()
-postPaste conn (Paste u l c) = (execute conn "insert into paste (?,?,?)" $ (u,l,c) )>> return ()
+postPaste conn (Paste u l c) = execute conn q (u,l,c) >> return ()
+  where q = "insert into paste (?,?,?)"
 
 getConnInfo :: IO (Maybe ConnectInfo)
 getConnInfo = do
