@@ -91,12 +91,12 @@ main = do
                     p <- Tr.mapM (liftIO . getPaste conn) (UUID.fromString u)
                     case join p of
                         Just paste -> S.html $ formatPaste paste
-                        Nothing -> status status404 >> S.html "<h1>Not found</h1>"
-                forM_ languages $ \lang -> do
-                    post "/lang/" $ do
-                        c <- S.body
-                        let uid = UUID.generateNamed nsMinipaste (B.unpack c)
-                        liftIO $ postPaste conn (Paste uid lang c)
-                        redirect $ T.pack ('/': (UUID.toString uid))
+                        Nothing -> status status404 >> S.html "<h1>Paste not found</h1>"
+                post "/:lang" $ do
+                    l <- param "lang"
+                    c <- S.body
+                    let uid = UUID.generateNamed nsMinipaste (B.unpack c)
+                    liftIO $ postPaste conn (Paste uid l c)
+                    redirect $ T.pack ('/': (UUID.toString uid))
 
 
