@@ -43,12 +43,6 @@ data Paste = Paste { pasteId      :: UUID
 instance FromRow Paste where
   fromRow = Paste <$> field <*> field <*> field
 
-instance ToRow Paste where
-  toRow p = [ toField (pasteId p)
-            , toField (pasteLang p)
-            , toField (pasteContent p)
-            ]
-
 nsMinipaste :: UUID
 nsMinipaste = UUID.generateNamed UUID.namespaceURL (B.unpack "github.com/jtanguy/minipaste")
 
@@ -56,7 +50,7 @@ getPaste :: Connection -> UUID -> IO (Maybe Paste)
 getPaste conn uid = listToMaybe <$> query conn "select * from paste where pasteId = ?" (Only uid)
 
 postPaste :: Connection -> Paste -> IO ()
-postPaste conn p = (execute conn "insert into paste (?,?,?)" $ p )>> return ()
+postPaste conn (Paste u l c) = (execute conn "insert into paste (?,?,?)" $ (u,l,c) )>> return ()
 
 getConnInfo :: IO (Maybe ConnectInfo)
 getConnInfo = do
