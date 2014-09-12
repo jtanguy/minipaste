@@ -29,11 +29,10 @@ import           Web.Scotty
 import qualified Web.Scotty                         as S
 
 initTable :: Query
-initTable = "create table if not exists paste (
-    pasteId uuid primary key,
-    pasteContents Text not null,
-    pasteLang Text not null
-);"
+initTable = "create table if not exists paste (\
+\   pasteId uuid primary key,\
+\   pasteContents Text not null,\
+\   pasteLang Text not null);"
 
 data Paste = Paste { pasteId      :: UUID
                    , pasteLang    :: String
@@ -50,7 +49,7 @@ instance ToRow Paste where
             ]
 
 nsMinipaste :: UUID
-nsMinipaste = UUID.generateNamed UUID.namespaceURL (B.unpack "hackage.haskell.org/package/minipaste")
+nsMinipaste = UUID.generateNamed UUID.namespaceURL (B.unpack "github.com/jtanguy/minipaste")
 
 getPaste :: Connection -> UUID -> IO (Maybe Paste)
 getPaste conn uid = listToMaybe <$> query conn "select * from paste where pasteId = ?" (Only uid)
@@ -84,7 +83,7 @@ main = do
             exitFailure
         Just i -> do
             conn <- connect i
-            _ <- execute initTable
+            _ <- execute_ conn initTable
             scotty 8080 $ do
                 get "/:uid" $ do
                     u <- param "uid"
