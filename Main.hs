@@ -8,7 +8,8 @@ import qualified Data.ByteString.Lazy               as B
 import qualified Data.ByteString.Lazy.Char8         as B8
 import           Data.Maybe
 import           Data.Text.Lazy                     (Text)
-import qualified Data.Traversable                   as T
+import qualified Data.Text.Lazy                     as T
+import qualified Data.Traversable                   as Tr
 import           Data.UUID                          (UUID)
 import qualified Data.UUID                          as UUID
 import qualified Data.UUID.V5                       as UUID
@@ -87,7 +88,7 @@ main = do
             scotty 8080 $ do
                 get "/:uid" $ do
                     u <- param "uid"
-                    p <- T.mapM (liftIO . getPaste conn) (UUID.fromString u)
+                    p <- Tr.mapM (liftIO . getPaste conn) (UUID.fromString u)
                     case join p of
                         Just paste -> S.html $ formatPaste paste
                         Nothing -> status status404 >> S.html "<h1>Not found</h1>"
@@ -96,5 +97,6 @@ main = do
                         c <- S.body
                         let uid = UUID.generateNamed nsMinipaste (B.unpack c)
                         liftIO $ postPaste conn (Paste uid lang c)
+                        redirect $ T.pack ('/': (UUID.toString uid))
 
 
