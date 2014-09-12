@@ -54,6 +54,10 @@ postPaste :: Connection -> Paste -> IO ()
 postPaste conn (Paste u l c) = execute conn q (u,l,c) >> return ()
   where q = "insert into paste (?,?,?)"
 
+patchPaste :: Connection -> UUID -> String -> IO ()
+patchPaste conn uid lang = execute conn q (uid, lang) >> return ()
+  where q = "update paste set lang = ? where paste_id = ?"
+
 getConnInfo :: IO (Maybe ConnectInfo)
 getConnInfo = do
     host <- lookupEnv "POSTGRESQL_ADDON_HOST"
@@ -88,6 +92,11 @@ main = do
                     case join p of
                         Just paste -> S.html $ formatPaste paste
                         Nothing -> status status404 >> S.html "<h1>Paste not found</h1>"
+                patch "/:uid/:lang" $ do
+                    u <- param "uid"
+                    l <- param "lang"
+                    _<- Tr.mapM (liftIO . flip (patchPaste conn) l) (UUID.fromString u)
+                    redirect $ T.pack ('/':u)
                 post "/:lang" $ do
                     l <- param "lang"
                     c <- S.body
