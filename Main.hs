@@ -32,8 +32,8 @@ import qualified Web.Scotty                         as S
 initTable :: Query
 initTable = "create table if not exists paste (\
 \   paste_id uuid primary key,\
-\   lang Text not null\
-\   contents Text not null,);"
+\   lang Text not null,\
+\   contents Text not null);"
 
 data Paste = Paste { pasteId      :: UUID
                    , pasteLang    :: String
@@ -52,7 +52,7 @@ getPaste conn uid = listToMaybe <$> query conn q (Only uid)
 
 postPaste :: Connection -> Paste -> IO ()
 postPaste conn (Paste u l c) = execute conn q (u,l,c) >> return ()
-  where q = "insert into paste (?,?,?)"
+  where q = "insert into paste (paste_id,lang,contents) values (?,?,?)"
 
 patchPaste :: Connection -> UUID -> String -> IO ()
 patchPaste conn uid lang = execute conn q (uid, lang) >> return ()
