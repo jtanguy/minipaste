@@ -15,8 +15,6 @@ import qualified Data.UUID                          as UUID
 import qualified Data.UUID.V5                       as UUID
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.FromRow
-import           Database.PostgreSQL.Simple.ToField
-import           Database.PostgreSQL.Simple.ToRow
 import           Network.HTTP.Types.Status
 import           System.Environment
 import           System.Exit
