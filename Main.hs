@@ -72,7 +72,7 @@ formatPaste (Paste _ lang code) = renderHtml $ do
     H.head $ H.style ! A.type_ (toValue ("text/css" :: String))
            $ toHtml $ styleToCss zenburn
     H.body $ toHtml
-           $ formatHtmlBlock defaultFormatOpts
+           $ formatHtmlBlock defaultFormatOpts{numberLines=True}
            $ highlightAs lang (B8.unpack code)
 
 main :: IO ()
