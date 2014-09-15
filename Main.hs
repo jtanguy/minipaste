@@ -49,7 +49,11 @@ getPaste conn uid = listToMaybe <$> query conn q (Only uid)
   where q = "select * from paste where paste_id = ?"
 
 postPaste :: Connection -> Paste -> IO ()
-postPaste conn (Paste u l c) = execute conn q (u,l,c) >> return ()
+postPaste conn p@(Paste u l c) = do
+    paste <- getPaste conn u
+    case paste of
+        Just p -> return ()
+        Nothing -> execute conn q (u,l,c) >> return ()
   where q = "insert into paste (paste_id,lang,contents) values (?,?,?)"
 
 patchPaste :: Connection -> UUID -> String -> IO ()
