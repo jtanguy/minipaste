@@ -8,6 +8,7 @@ It is built on top of scotty, postgresql-simple, highlighting-kate and blaze.
 Features
 --------
 
+- List pastes (all/by lang)
 - POST a paste (baseurl/:lang)
 - GET a paste (baseurl/:uuid)
 - PATCH a paste' lang (baseurl/:uuid/:lang)
@@ -15,7 +16,6 @@ Features
 TODO
 ----
 
-- List pastes (all/by lang)
 
 TODON'T
 -------
