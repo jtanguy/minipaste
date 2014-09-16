@@ -52,7 +52,7 @@ getPastes :: Connection -> Maybe String -> IO [Paste]
 getPastes conn lang = case lang of
     Just l -> query conn q (Only l)
     Nothing -> query_ conn q'
-  where q = "select * from paste where paste_id = ?"
+  where q = "select * from paste where lang = ?"
         q' = "select * from paste"
 
 postPaste :: Connection -> Paste -> IO ()
