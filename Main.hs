@@ -109,6 +109,12 @@ main = do
                     l <- lookup "lang" <$> params
                     ps <- liftIO $ getPastes conn (T.unpack <$> l)
                     S.html $ formatPasteList ps
+                get "/:uid/raw" $ do
+                    u <- param "uid"
+                    p <- Tr.mapM (liftIO . getPaste conn) (UUID.fromString u)
+                    case join p of
+                        Just paste -> S.setHeader "Content-Type" "text/plain; charset=utf-8" >> S.raw (pasteContent paste)
+                        Nothing -> status status404 >> S.html "<h1>Paste not found</h1>"
                 get "/:uid" $ do
                     u <- param "uid"
                     p <- Tr.mapM (liftIO . getPaste conn) (UUID.fromString u)
