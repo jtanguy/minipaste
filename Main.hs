@@ -57,7 +57,7 @@ postPaste conn p@(Paste u l c) = do
   where q = "insert into paste (paste_id,lang,contents) values (?,?,?)"
 
 patchPaste :: Connection -> UUID -> String -> IO ()
-patchPaste conn uid lang = execute conn q (uid, lang) >> return ()
+patchPaste conn uid lang = execute conn q (lang, uid) >> return ()
   where q = "update paste set lang = ? where paste_id = ?"
 
 getConnInfo :: IO (Maybe ConnectInfo)
