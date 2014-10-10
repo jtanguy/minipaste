@@ -48,6 +48,13 @@ getPaste :: Connection -> UUID -> IO (Maybe Paste)
 getPaste conn uid = listToMaybe <$> query conn q (Only uid)
   where q = "select * from paste where paste_id = ?"
 
+getPastes :: Connection -> Maybe String -> IO [Paste]
+getPastes conn lang = case lang of
+    Just l -> query conn q (Only l)
+    Nothing -> query_ conn q'
+  where q = "select * from paste where lang = ?"
+        q' = "select * from paste"
+
 postPaste :: Connection -> Paste -> IO ()
 postPaste conn p@(Paste u l c) = do
     paste <- getPaste conn u
@@ -77,6 +84,16 @@ formatPaste (Paste _ lang code) = renderHtml $ do
            $ formatHtmlBlock defaultFormatOpts{numberLines=True}
            $ highlightAs lang (B8.unpack code)
 
+formatPasteList :: [Paste] -> Text
+formatPasteList pastes = renderHtml $ do
+    H.body $ toHtml $ H.table $ do
+           H.thead $ H.tr $ sequence_ [td "paste" , td "lang"]
+           H.tbody $ forM_ pastes pasteLine
+  where
+    pasteLine (Paste u l _) = tr $ do
+        td $ a ! href (toValue $ UUID.toString u) $ toHtml (UUID.toString u)
+        td $ toHtml l
+
 main :: IO ()
 main = do
     info <- getConnInfo
@@ -88,6 +105,10 @@ main = do
             conn <- connect i
             _ <- execute_ conn initTable
             scotty 8080 $ do
+                get "/" $ do
+                    l <- lookup "lang" <$> params
+                    ps <- liftIO $ getPastes conn (T.unpack <$> l)
+                    S.html $ formatPasteList ps
                 get "/:uid" $ do
                     u <- param "uid"
                     p <- Tr.mapM (liftIO . getPaste conn) (UUID.fromString u)
@@ -105,5 +126,4 @@ main = do
                     let uid = UUID.generateNamed nsMinipaste (B.unpack c)
                     liftIO $ postPaste conn (Paste uid l c)
                     redirect $ T.pack ('/': (UUID.toString uid))
-
 
