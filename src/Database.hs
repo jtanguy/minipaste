@@ -40,17 +40,17 @@ instance H.RowParser H.Postgres Paste where
       where toPaste (uid, lang, cont) = Paste uid lang cont
 
 getPaste :: UUID.UUID -> H.Tx H.Postgres s (Maybe Paste)
-getPaste uid = H.single $ [H.q|select * from paste where paste_id = ?|] uid
+getPaste uid = H.single $ [H.q|select (paste_id,lang,contents) from paste where paste_id = ?|] uid
 
 getPastes :: Maybe String -> H.Tx H.Postgres s [Paste]
-getPastes (Just l) = H.list $ [H.q|select * from paste where lang = ?|] l
-getPastes Nothing = H.list $ [H.q|select * from paste|]
+getPastes (Just l) = H.list $ [H.q|select (paste_id,lang,contents) from paste where lang = ?|] l
+getPastes Nothing = H.list $ [H.q|select (paste_id,lang,contents) from paste|]
 
 -- postPaste :: Paste -> H.Tx H.Postgres s ()
 postPaste p@(Paste u l c) = H.unit $ [H.q|insert into paste (paste_id,lang,contents)
                                         select (?,?,?)
                                         where not exists (
-                                          select * from paste where paste_id = ?
+                                          select (paste_id,lang,contents) from paste where paste_id = ?
                                         ) |] u l c u
 
 patchPaste :: UUID.UUID -> String -> H.Tx H.Postgres s ()
