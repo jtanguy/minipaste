@@ -33,7 +33,7 @@ import           Paste
 initTable :: H.Tx H.Postgres s ()
 initTable = H.unit $ [H.q|create table if not exists paste (paste_id uuid primary key,
                                                    lang Text not null,
-                                                   contents Text not null);|]
+                                                   contents Text not null)|]
 
 instance H.RowParser H.Postgres Paste where
     parseRow = fmap toPaste . H.parseRow
@@ -51,10 +51,10 @@ postPaste p@(Paste u l c) = H.unit $ [H.q|insert into paste (paste_id,lang,conte
                                         select (?,?,?)
                                         where not exists (
                                           select * from paste where paste_id = ?
-                                        ); |] u l c u
+                                        ) |] u l c u
 
 patchPaste :: UUID.UUID -> String -> H.Tx H.Postgres s ()
-patchPaste uid lang = H.unit $ [H.q|update paste set lang = ? where paste_id = ?;|] lang uid
+patchPaste uid lang = H.unit $ [H.q|update paste set lang = ? where paste_id = ?|] lang uid
 
 getConnInfo :: IO  H.Postgres
 getConnInfo = do
