@@ -58,33 +58,33 @@ main = do
                               H.sessionSettings 6 30
     H.session info sessionSettings $ do
         H.tx Nothing initTable
-        sess' <- flip runReaderT <$> ask
-        scottyT 8080 (id) (sess') $ do
+        sess <- H.sessionUnlifter
+        scottyT 8080 id sess $ do
             defaultHandler handler
             get "/" $ do
                 l <- lookup "lang" <$> params
-                ps <- lift $ H.tx Nothing $ getPastes (T.unpack <$> l)
+                ps <- lift $ H.tx Nothing $ getPastes Nothing --(T.unpack <$> l)
                 html $ formatPasteList ps
-            get "/:uid/raw" $ do
-                u <- param "uid"
-                p <- lift $ H.tx Nothing $ Tr.mapM getPaste (UUID.fromString u)
-                case join p of
-                    Just paste -> setHeader "Content-Type" "text/plain; charset=utf-8" >> raw (pasteContent paste)
-                    Nothing -> raise NotFound
+            -- get "/:uid/raw" $ do
+            --     u <- param "uid"
+            --     p <- lift $ H.tx Nothing $ Tr.mapM getPaste (UUID.fromString u)
+            --     case join p of
+            --         Just paste -> setHeader "Content-Type" "text/plain; charset=utf-8" >> raw (pasteContent paste)
+            --         Nothing -> raise NotFound
             get "/:uid" $ do
                 u <- param "uid"
                 p <- lift $ H.tx Nothing $ Tr.mapM getPaste (UUID.fromString u)
                 case join p of
                     Just paste -> html $ formatPaste paste
                     Nothing -> raise NotFound
-            patch "/:uid/:lang" $ do
-                u <- param "uid"
-                l <- param "lang"
-                lift $ H.tx Nothing $ Tr.mapM (flip patchPaste l) (UUID.fromString u)
-                redirect $ T.pack ('/':u)
-            post "/:lang" $ do
-                l <- param "lang"
-                c <- body
-                let uid = UUID.generateNamed nsMinipaste (B.unpack c)
-                lift $ H.tx Nothing $ postPaste (Paste uid l c)
-                redirect $ T.pack ('/': (UUID.toString uid))
+            -- patch "/:uid/:lang" $ do
+            --     u <- param "uid"
+            --     l <- param "lang"
+            --     lift $ H.tx Nothing $ Tr.mapM (flip patchPaste l) (UUID.fromString u)
+            --     redirect $ T.pack ('/':u)
+            -- post "/:lang" $ do
+            --     l <- param "lang"
+            --     c <- body
+            --     let uid = UUID.generateNamed nsMinipaste (B.unpack c)
+            --     lift $ H.tx Nothing $ postPaste (Paste uid l c)
+            --     redirect $ T.pack ('/': (UUID.toString uid))

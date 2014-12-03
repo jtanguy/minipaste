@@ -17,8 +17,8 @@ module Database where
 
 import           Control.Applicative
 import           Control.Monad
-import qualified Data.ByteString       as B
 import qualified Data.ByteString.Char8 as B8
+import qualified Data.ByteString.Lazy  as B
 import           Data.Maybe
 import qualified Data.Text             as T
 import qualified Data.UUID             as UUID
@@ -31,20 +31,22 @@ import           Paste
 
 -- initTable :: H.Statement H.Postgres
 initTable :: H.Tx H.Postgres s ()
-initTable = H.unit $ [H.q|create table if not exists paste (paste_id uuid primary key,
+initTable = H.unit $ [H.q|CREATE TABLE IF NOT EXISTS paste (paste_id uuid primary key,
                                                    lang Text not null,
                                                    contents Text not null)|]
 
 instance H.RowParser H.Postgres Paste where
     parseRow = fmap toPaste . H.parseRow
-      where toPaste (uid, lang, cont) = Paste uid lang cont
+
+toPaste :: (UUID.UUID,String,B.ByteString) -> Paste
+toPaste (uid, lang, cont) = Paste uid lang cont
 
 getPaste :: UUID.UUID -> H.Tx H.Postgres s (Maybe Paste)
-getPaste uid = H.single $ [H.q|select (paste_id,lang,contents) from paste where paste_id = ?|] uid
+getPaste uid = H.single $ [H.q|SELECT paste_id, lang, contents FROM paste WHERE paste_id = ?|] uid
 
 getPastes :: Maybe String -> H.Tx H.Postgres s [Paste]
-getPastes (Just l) = H.list $ [H.q|select (paste_id,lang,contents) from paste where lang = ?|] l
-getPastes Nothing = H.list $ [H.q|select (paste_id,lang,contents) from paste|]
+getPastes (Just l) = H.list $ [H.q|SELECT paste_id, lang, contents FROM paste WHERE lang = ?|] l
+getPastes Nothing  = H.list $ [H.q|SELECT paste_id, lang, contents FROM paste|]
 
 -- postPaste :: Paste -> H.Tx H.Postgres s ()
 postPaste p@(Paste u l c) = H.unit $ [H.q|insert into paste (paste_id,lang,contents)
@@ -56,7 +58,7 @@ postPaste p@(Paste u l c) = H.unit $ [H.q|insert into paste (paste_id,lang,conte
 patchPaste :: UUID.UUID -> String -> H.Tx H.Postgres s ()
 patchPaste uid lang = H.unit $ [H.q|update paste set lang = ? where paste_id = ?|] lang uid
 
-getConnInfo :: IO  H.Postgres
+getConnInfo :: IO H.Postgres
 getConnInfo = do
     host <- lookupEnv "POSTGRESQL_ADDON_HOST"
     port <- lookupEnv "POSTGRESQL_ADDON_PORT"
