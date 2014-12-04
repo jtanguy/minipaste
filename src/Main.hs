@@ -15,20 +15,19 @@ module Main where
 
 import           Control.Applicative
 import           Control.Monad
--- import           Control.Monad.IO.Class
 import           Control.Monad.Reader
 import qualified Data.ByteString.Lazy          as B
 import           Data.Maybe
 import           Data.Monoid
--- import           Data.Pool
+import Data.List
 import qualified Data.Text.Lazy                as T
+import qualified Data.Text.Lazy.Encoding                as TE
 import qualified Data.Traversable              as Tr
 import qualified Data.UUID                     as UUID
 import qualified Data.UUID.V5                  as UUID
 import qualified Hasql                         as H
 import qualified Hasql.Postgres                as H
 import           Network.HTTP.Types.Status
-import           System.Exit
 import           System.IO
 import           Web.Scotty.Trans
 
@@ -65,26 +64,28 @@ main = do
                 l <- lookup "lang" <$> params
                 ps <- lift $ H.tx Nothing $ getPastes Nothing --(T.unpack <$> l)
                 html $ formatPasteList ps
-            -- get "/:uid/raw" $ do
-            --     u <- param "uid"
-            --     p <- lift $ H.tx Nothing $ Tr.mapM getPaste (UUID.fromString u)
-            --     case join p of
-            --         Just paste -> setHeader "Content-Type" "text/plain; charset=utf-8" >> raw (pasteContent paste)
-            --         Nothing -> raise NotFound
+            get "/:uid/raw" $ do
+                u <- param "uid"
+                p <- lift $ H.tx Nothing $ Tr.mapM getPaste (UUID.fromString u)
+                case join p of
+                    Just paste -> text (T.fromStrict $ pasteContent paste)
+                    Nothing -> raise NotFound
             get "/:uid" $ do
                 u <- param "uid"
                 p <- lift $ H.tx Nothing $ Tr.mapM getPaste (UUID.fromString u)
                 case join p of
                     Just paste -> html $ formatPaste paste
                     Nothing -> raise NotFound
-            -- patch "/:uid/:lang" $ do
-            --     u <- param "uid"
-            --     l <- param "lang"
-            --     lift $ H.tx Nothing $ Tr.mapM (flip patchPaste l) (UUID.fromString u)
-            --     redirect $ T.pack ('/':u)
-            -- post "/:lang" $ do
-            --     l <- param "lang"
-            --     c <- body
-            --     let uid = UUID.generateNamed nsMinipaste (B.unpack c)
-            --     lift $ H.tx Nothing $ postPaste (Paste uid l c)
-            --     redirect $ T.pack ('/': (UUID.toString uid))
+            patch "/:uid/:lang" $ do
+                u <- param "uid"
+                l <- param "lang"
+                lift $ H.tx Nothing $ Tr.mapM (flip patchPaste l) (UUID.fromString u)
+                redirect $ T.pack ('/':u)
+            post "/:lang" $ do
+                l <- param "lang"
+                c <- body
+                let uid = UUID.generateNamed nsMinipaste (B.unpack c)
+                -- Pray it's actually UTF-8
+                let contents = T.toStrict $ TE.decodeUtf8 c
+                lift $ H.tx Nothing $ postPaste (Paste uid l contents)
+                redirect $ T.pack ('/': (UUID.toString uid))

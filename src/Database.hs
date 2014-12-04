@@ -18,7 +18,6 @@ module Database where
 import           Control.Applicative
 import           Control.Monad
 import qualified Data.ByteString.Char8 as B8
-import qualified Data.ByteString.Lazy  as B
 import           Data.Maybe
 import qualified Data.Text             as T
 import qualified Data.UUID             as UUID
@@ -38,7 +37,7 @@ initTable = H.unit $ [H.q|CREATE TABLE IF NOT EXISTS paste (paste_id uuid primar
 instance H.RowParser H.Postgres Paste where
     parseRow = fmap toPaste . H.parseRow
 
-toPaste :: (UUID.UUID,String,B.ByteString) -> Paste
+toPaste :: (UUID.UUID,T.Text,T.Text) -> Paste
 toPaste (uid, lang, cont) = Paste uid lang cont
 
 getPaste :: UUID.UUID -> H.Tx H.Postgres s (Maybe Paste)
