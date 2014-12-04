@@ -47,12 +47,13 @@ getPastes :: Maybe String -> H.Tx H.Postgres s [Paste]
 getPastes (Just l) = H.list $ [H.q|SELECT paste_id, lang, contents FROM paste WHERE lang = ?|] l
 getPastes Nothing  = H.list $ [H.q|SELECT paste_id, lang, contents FROM paste|]
 
--- postPaste :: Paste -> H.Tx H.Postgres s ()
-postPaste p@(Paste u l c) = H.unit $ [H.q|insert into paste (paste_id,lang,contents)
-                                        select (?,?,?)
-                                        where not exists (
-                                          select (paste_id,lang,contents) from paste where paste_id = ?
-                                        ) |] u l c u
+postPaste :: Paste -> H.Tx H.Postgres s ()
+postPaste p@(Paste u l c) = do
+    p <- getPaste u
+    case p of
+        Just _ -> return ()
+        _ -> H.unit $ [H.q|insert into paste (paste_id,lang,contents)
+                                        values (?,?,?) |] u l c
 
 patchPaste :: UUID.UUID -> String -> H.Tx H.Postgres s ()
 patchPaste uid lang = H.unit $ [H.q|update paste set lang = ? where paste_id = ?|] lang uid
