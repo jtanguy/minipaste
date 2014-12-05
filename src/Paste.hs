@@ -8,8 +8,7 @@ Maintainer  : julien.tanguy@jhome.fr
 Stability   : experimental
 Portability : portable
 
-
-
+Paste definitions and views
 -}
 module Paste where
 
@@ -28,10 +27,20 @@ data Paste = Paste { pasteId      :: UUID.UUID
                    , pasteContent :: T.Text
                    } deriving (Show)
 
-formatPaste :: Paste -> TL.Text
-formatPaste (Paste _ lang code) = renderHtml $ do
+getStyle :: String -> Style
+getStyle "pygments" = pygments
+getStyle "kate" = kate
+getStyle "espresso" = espresso
+getStyle "tango" = tango
+getStyle "haddock" = haddock
+getStyle "monochrome" = monochrome
+getStyle "zenburn" = zenburn
+getStyle _ = monochrome
+
+formatPaste :: Paste -> Style -> TL.Text
+formatPaste (Paste _ lang code) style = renderHtml $ do
     H.head $ H.style ! A.type_ (toValue ("text/css" :: String))
-           $ toHtml $ styleToCss zenburn
+           $ toHtml $ styleToCss style
     H.body $ toHtml
            $ formatHtmlBlock defaultFormatOpts{numberLines=True}
            $ highlightAs (T.unpack lang) (T.unpack code)

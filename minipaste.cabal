@@ -1,5 +1,5 @@
 name:                minipaste
-version:             0.3.0.0
+version:             0.3.1.0
 synopsis:            Minimal pastebin-like service
 description:         Minipaste is a small service built on top of scotty, highlighting-kate and postgresql-simple
 license:             BSD3

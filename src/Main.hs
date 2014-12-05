@@ -8,27 +8,22 @@ Maintainer  : julien.tanguy@jhome.fr
 Stability   : experimental
 Portability : portable
 
-
-
+Minimal pastebin service, powered by Scotty, Blaze, and Hasql
 -}
 module Main where
 
 import           Control.Applicative
 import           Control.Monad
-import           Control.Monad.Reader
-import qualified Data.ByteString.Lazy          as B
-import           Data.Maybe
+import           Control.Monad.Trans.Class
+import qualified Data.ByteString.Lazy      as B
 import           Data.Monoid
-import Data.List
-import qualified Data.Text.Lazy                as T
-import qualified Data.Text.Lazy.Encoding                as TE
-import qualified Data.Traversable              as Tr
-import qualified Data.UUID                     as UUID
-import qualified Data.UUID.V5                  as UUID
-import qualified Hasql                         as H
-import qualified Hasql.Postgres                as H
+import qualified Data.Text.Lazy            as T
+import qualified Data.Text.Lazy.Encoding   as TE
+import qualified Data.Traversable          as Tr
+import qualified Data.UUID                 as UUID
+import qualified Data.UUID.V5              as UUID
+import qualified Hasql                     as H
 import           Network.HTTP.Types.Status
-import           System.IO
 import           Web.Scotty.Trans
 
 import           Database
@@ -62,7 +57,7 @@ main = do
             defaultHandler handler
             get "/" $ do
                 l <- lookup "lang" <$> params
-                ps <- lift $ H.tx Nothing $ getPastes Nothing --(T.unpack <$> l)
+                ps <- lift $ H.tx Nothing $ getPastes (T.unpack <$> l)
                 html $ formatPasteList ps
             get "/:uid/raw" $ do
                 u <- param "uid"
@@ -72,9 +67,10 @@ main = do
                     Nothing -> raise NotFound
             get "/:uid" $ do
                 u <- param "uid"
+                style <- param "style" `rescue` (const $ return "zenburn")
                 p <- lift $ H.tx Nothing $ Tr.mapM getPaste (UUID.fromString u)
                 case join p of
-                    Just paste -> html $ formatPaste paste
+                    Just paste -> html $ formatPaste paste (getStyle style)
                     Nothing -> raise NotFound
             patch "/:uid/:lang" $ do
                 u <- param "uid"

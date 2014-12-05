@@ -11,7 +11,7 @@ Stability   : experimental
 Portability : portable
 
 
-
+Database abstractions
 -}
 module Database where
 
@@ -52,11 +52,11 @@ postPaste p@(Paste u l c) = do
     p <- getPaste u
     case p of
         Just _ -> return ()
-        _ -> H.unit $ [H.q|insert into paste (paste_id,lang,contents)
-                                        values (?,?,?) |] u l c
+        _ -> H.unit $ [H.q|INSERT INTO paste (paste_id,lang,contents)
+                                        VALUES (?,?,?) |] u l c
 
 patchPaste :: UUID.UUID -> String -> H.Tx H.Postgres s ()
-patchPaste uid lang = H.unit $ [H.q|update paste set lang = ? where paste_id = ?|] lang uid
+patchPaste uid lang = H.unit $ [H.q|UPDATE paste SET lang = ? WHERE paste_id = ?|] lang uid
 
 getConnInfo :: IO H.Postgres
 getConnInfo = do

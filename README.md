@@ -2,7 +2,7 @@ minipaste, a minimal pastebin service
 =====================================
 
 Minipaste is a minimal pastebin service built with haskell.
-It is built on top of scotty, postgresql-simple, highlighting-kate and blaze.
+It is built on top of scotty, hasql, highlighting-kate and blaze.
 
 
 Features
@@ -15,6 +15,8 @@ Features
 
 TODO
 ----
+
+- Better encoding handling
 
 
 TODON'T
