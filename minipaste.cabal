@@ -1,7 +1,7 @@
 name:                minipaste
-version:             0.3.1.0
+version:             0.4.0.0
 synopsis:            Minimal pastebin-like service
-description:         Minipaste is a small service built on top of scotty, highlighting-kate and postgresql-simple
+description:         Minipaste is a small service built on top of scotty, highlighting-kate and hasql
 license:             BSD3
 license-file:        LICENSE
 author:              Julien Tanguy
@@ -24,16 +24,17 @@ executable minipaste
   main-is:             Main.hs
   other-extensions:    OverloadedStrings
   build-depends:       base >=4.7 && <4.8,
-                       uuid >=1.3 && <1.4,
+                       uuid >=1.3,
                        bytestring >=0.10 && <0.11,
                        mtl,
-                       ex-pool,
-                       hasql,
+                       hasql >= 0.4,
                        hasql-postgres,
                        highlighting-kate,
                        blaze-html,
                        text,
                        http-types,
+                       time,
+                       old-locale,
                        transformers,
                        scotty
   default-language:    Haskell2010

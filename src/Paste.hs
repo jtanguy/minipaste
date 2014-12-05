@@ -15,7 +15,10 @@ module Paste where
 import           Control.Monad
 import qualified Data.Text                     as T
 import qualified Data.Text.Lazy                as TL
+import           Data.Time.Clock
+import           Data.Time.Format
 import qualified Data.UUID                     as UUID
+import           System.Locale
 import           Text.Blaze.Html               (toHtml)
 import           Text.Blaze.Html.Renderer.Text (renderHtml)
 import           Text.Blaze.Html5              as H hiding (param)
@@ -25,6 +28,7 @@ import           Text.Highlighting.Kate
 data Paste = Paste { pasteId      :: UUID.UUID
                    , pasteLang    :: T.Text
                    , pasteContent :: T.Text
+                   , created_at   :: UTCTime
                    } deriving (Show)
 
 getStyle :: String -> Style
@@ -38,7 +42,7 @@ getStyle "zenburn" = zenburn
 getStyle _ = monochrome
 
 formatPaste :: Paste -> Style -> TL.Text
-formatPaste (Paste _ lang code) style = renderHtml $ do
+formatPaste (Paste _ lang code _) style = renderHtml $ do
     H.head $ H.style ! A.type_ (toValue ("text/css" :: String))
            $ toHtml $ styleToCss style
     H.body $ toHtml
@@ -48,9 +52,10 @@ formatPaste (Paste _ lang code) style = renderHtml $ do
 formatPasteList :: [Paste] -> TL.Text
 formatPasteList pastes = renderHtml $ do
     H.body $ toHtml $ H.table $ do
-           H.thead $ H.tr $ sequence_ [td "paste" , td "lang"]
+           H.thead $ H.tr $ sequence_ [td "Paste" , td "Lang", td "Created at"]
            H.tbody $ forM_ pastes pasteLine
   where
-    pasteLine (Paste u l _) = tr $ do
+    pasteLine (Paste u l _ c) = tr $ do
         td $ a ! href (toValue $ UUID.toString u) $ toHtml (UUID.toString u)
         td $ toHtml l
+        td $ toHtml $ formatTime defaultTimeLocale "%F %T %Z" c

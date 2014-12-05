@@ -83,5 +83,5 @@ main = do
                 let uid = UUID.generateNamed nsMinipaste (B.unpack c)
                 -- Pray it's actually UTF-8
                 let contents = T.toStrict $ TE.decodeUtf8 c
-                lift $ H.tx Nothing $ postPaste (Paste uid l contents)
+                lift $ H.tx Nothing $ postPaste  uid l contents
                 redirect $ T.pack ('/': (UUID.toString uid))
