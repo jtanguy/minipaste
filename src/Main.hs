@@ -49,7 +49,7 @@ main :: IO ()
 main = do
     info <- getConnInfo
     sessionSettings <- maybe (fail "Improper session settings") return $
-                              H.sessionSettings 6 30
+                              H.sessionSettings 5 30
     H.session info sessionSettings $ do
         H.tx Nothing initTable
         sess <- H.sessionUnlifter

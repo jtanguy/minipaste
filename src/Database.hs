@@ -1,5 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TypeSynonymInstances     #-}
 {-# LANGUAGE QuasiQuotes           #-}
 {-|
 Module      : Database
@@ -68,6 +69,6 @@ getConnInfo = do
     user <- lookupEnv "POSTGRESQL_ADDON_USER"
     pwd  <- lookupEnv "POSTGRESQL_ADDON_PASSWORD"
     db   <- lookupEnv "POSTGRESQL_ADDON_DB"
-    case liftM5 H.Postgres (B8.pack <$> host) (read <$> port) (T.pack <$> user) (T.pack <$> pwd) (T.pack <$> db) of
+    case liftM5 H.ParamSettings (B8.pack <$> host) (read <$> port) (B8.pack <$> user) (B8.pack <$> pwd) (B8.pack <$> db) of
         Just p -> return p
         Nothing -> fail "Could not get connection info from environment"
