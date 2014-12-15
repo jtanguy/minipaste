@@ -1,12 +1,12 @@
 name:                minipaste
-version:             0.5.2.0
+version:             0.5.2.1
 synopsis:            Minimal pastebin-like service
 description:         Minipaste is a small service built on top of scotty, highlighting-kate and hasql
 license:             BSD3
 license-file:        LICENSE
 author:              Julien Tanguy
 maintainer:          julien.tanguy@jhome.fr
-homepage:   https://github.com/jtanguy/minipaste
+homepage:            https://github.com/jtanguy/minipaste
 category:            Web
 build-type:          Simple
 extra-source-files:  README.md
@@ -23,16 +23,16 @@ executable minipaste
   hs-source-dirs:      src
   main-is:             Main.hs
   other-extensions:    OverloadedStrings
-  build-depends:       base >=4.7,
+  build-depends:       base >=4.7 && <= 4.8,
                        blaze-html >= 0.7,
                        bytestring >=0.10,
-                       hasql >= 0.4,
-                       hasql-postgres >= 0.8,
+                       hasql == 0.4.*,
+                       hasql-postgres == 0.8.*,
                        highlighting-kate >= 0.5,
                        http-types >= 0.8,
                        mtl >= 2.1,
                        old-locale >= 1.0,
-                       scotty >= 0.9 ,
+                       scotty >= 0.9,
                        text >= 1.2,
                        time >= 1.4,
                        transformers >= 0.3,
