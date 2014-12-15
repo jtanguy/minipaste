@@ -13,11 +13,9 @@ USER deploy
 ENV HOME /home/deploy
 WORKDIR /home/deploy/minipaste
 
-RUN cabal update
-RUN cabal sandbox init
+RUN cabal update && cabal sandbox init
 RUN cabal install -j4 --only-dependencies
-RUN cabal configure
-RUN cabal build 
+RUN cabal configure && cabal build 
 
 EXPOSE 8080
 
