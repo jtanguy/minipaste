@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
-{-# LANGUAGE TypeSynonymInstances     #-}
 {-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE TypeSynonymInstances  #-}
 {-|
 Module      : Database
 Copyright   : (c) 2014 Julien Tanguy
@@ -23,14 +23,12 @@ import           Data.Maybe
 import qualified Data.Text             as T
 import           Data.Time.Clock
 import qualified Data.UUID             as UUID
-
 import qualified Hasql                 as H
 import qualified Hasql.Postgres        as H
 import           System.Environment
 
 import           Paste
 
--- initTable :: H.Statement H.Postgres
 initTable :: H.Tx H.Postgres s ()
 initTable = H.unit $ [H.q|CREATE TABLE IF NOT EXISTS paste (
                                paste_id uuid primary key,
