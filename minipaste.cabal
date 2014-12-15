@@ -22,7 +22,6 @@ source-repository head
 executable minipaste
   hs-source-dirs:      src
   main-is:             Main.hs
-  other-extensions:    OverloadedStrings
   build-depends:       base >=4.7 && <= 4.8,
                        blaze-html >= 0.7,
                        bytestring >=0.10,
