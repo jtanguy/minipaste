@@ -62,11 +62,7 @@ patchPaste uid lang = H.unit $ [H.q|UPDATE paste SET lang = ? WHERE paste_id = ?
 
 getConnInfo :: IO H.Postgres
 getConnInfo = do
-    host <- lookupEnv "POSTGRESQL_ADDON_HOST"
-    port <- lookupEnv "POSTGRESQL_ADDON_PORT"
-    user <- lookupEnv "POSTGRESQL_ADDON_USER"
-    pwd  <- lookupEnv "POSTGRESQL_ADDON_PASSWORD"
-    db   <- lookupEnv "POSTGRESQL_ADDON_DB"
-    case liftM5 H.ParamSettings (B8.pack <$> host) (read <$> port) (B8.pack <$> user) (B8.pack <$> pwd) (B8.pack <$> db) of
+    uri <- lookupEnv "POSTGRESQL_ADDON_URI"
+    case H.StringSettings . B8.pack <$> uri of
         Just p -> return p
         Nothing -> fail "Could not get connection info from environment"
