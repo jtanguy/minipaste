@@ -67,7 +67,7 @@ main = do
                     Nothing -> raise NotFound
             get "/:uid" $ do
                 u <- param "uid"
-                style <- param "style" `rescue` (const $ return "zenburn")
+                style <- param "style" `rescue` const (return "zenburn")
                 p <- lift $ H.tx Nothing $ Tr.mapM getPaste (UUID.fromString u)
                 case join p of
                     Just paste -> html $ formatPaste paste (getStyle style)
@@ -75,7 +75,7 @@ main = do
             patch "/:uid/:lang" $ do
                 u <- param "uid"
                 l <- param "lang"
-                lift $ H.tx Nothing $ Tr.mapM (flip patchPaste l) (UUID.fromString u)
+                lift $ H.tx Nothing $ Tr.mapM (`patchPaste` l) (UUID.fromString u)
                 redirect $ T.pack ('/':u)
             post "/:lang" $ do
                 l <- param "lang"
@@ -84,4 +84,4 @@ main = do
                 -- Pray it's actually UTF-8
                 let contents = T.toStrict $ TE.decodeUtf8 c
                 lift $ H.tx Nothing $ postPaste  uid l contents
-                redirect $ T.pack ('/': (UUID.toString uid))
+                redirect $ T.pack ('/': UUID.toString uid)
