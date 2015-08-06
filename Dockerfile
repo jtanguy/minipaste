@@ -1,18 +1,17 @@
 FROM fpco/stack-build:latest
 
-RUN /usr/bin/useradd -m deploy
+ADD . /opt/minipaste
 
-ADD . /home/deploy/minipaste
+WORKDIR /opt/minipaste
 
-RUN chown -R deploy:deploy /home/deploy/minipaste
+RUN stack setup
 
-USER deploy
-ENV HOME /home/deploy
-WORKDIR /home/deploy/minipaste
+RUN stack build --only-snapshot
 
 RUN stack build
 
+RUN stack install
+
 EXPOSE 8080
 
-ENTRYPOINT ["stack exec -- minipaste"]
-
+CMD stack exec -- minipaste
