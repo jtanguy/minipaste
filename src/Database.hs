@@ -1,6 +1,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE QuasiQuotes           #-}
+{-# LANGUAGE RankNTypes           #-}
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-|
 Module      : Database
@@ -16,9 +18,11 @@ Database abstractions
 -}
 module Database where
 
+import qualified Data.ByteString.Lazy.Char8 as LB8
 import           Control.Applicative
 import           Control.Monad
-import qualified Data.ByteString.Char8 as B8
+import           Control.Monad.Reader
+import           Control.Monad.Trans.Either
 import           Data.Maybe
 import qualified Data.Text             as T
 import           Data.Time.Clock
@@ -26,43 +30,47 @@ import qualified Data.UUID             as UUID
 import qualified Hasql                 as H
 import qualified Hasql.Postgres        as H
 import           System.Environment
+import Servant
 
+import Config
 import           Paste
 
-initTable :: H.Tx H.Postgres s ()
-initTable = H.unit $ [H.q|CREATE TABLE IF NOT EXISTS paste (
-                               paste_id uuid primary key,
-                               lang Text not null,
-                               contents Text not null,
-                               created_at timestamptz not null default now())|]
+type DBIO a = Config -> IO (Either (H.SessionError H.Postgres) a)
 
-instance H.RowParser H.Postgres Paste where
-    parseRow = fmap toPaste . H.parseRow
+hasqlServantErr :: H.SessionError H.Postgres -> ServantErr
+hasqlServantErr e = err500 { errBody = LB8.pack (show e)}
+
+runHasql :: forall a. (forall s. H.Tx H.Postgres s a) -> ReaderT Config (EitherT ServantErr IO) a
+runHasql q = ReaderT $ \cfg -> do
+    res <- H.session (getPool cfg) $ H.tx Nothing q
+    bimapEitherT hasqlServantErr id $ hoistEither res
+
+
+initTable :: H.Tx H.Postgres s ()
+initTable = H.unitEx $ [H.stmt|CREATE TABLE IF NOT EXISTS paste (
+                           paste_id uuid primary key,
+                           lang Text not null,
+                           contents Text not null,
+                           created_at timestamptz not null default now())|]
 
 toPaste :: (UUID.UUID,T.Text,T.Text, UTCTime) -> Paste
 toPaste (uid, lang, cont, created_at) = Paste uid lang cont created_at
 
 getPaste :: UUID.UUID -> H.Tx H.Postgres s (Maybe Paste)
-getPaste uid = H.single $ [H.q|SELECT paste_id, lang, contents, created_at FROM paste WHERE paste_id = ?|] uid
+getPaste uid = fmap (fmap toPaste) <$> H.maybeEx $ [H.stmt|SELECT paste_id, lang, contents, created_at FROM paste WHERE paste_id = ?|] uid
 
 getPastes :: Maybe String -> H.Tx H.Postgres s [Paste]
-getPastes (Just l) = H.list $ [H.q|SELECT paste_id, lang, contents, created_at FROM paste WHERE lang = ?|] l
-getPastes Nothing  = H.list $ [H.q|SELECT paste_id, lang, contents, created_at FROM paste|]
+getPastes (Just l) = fmap (fmap toPaste) <$> H.listEx $ [H.stmt|SELECT paste_id, lang, contents, created_at FROM paste WHERE lang = ?|] l
+getPastes Nothing  = fmap (fmap toPaste) <$> H.listEx $ [H.stmt|SELECT paste_id, lang, contents, created_at FROM paste|]
 
-postPaste :: UUID.UUID -> T.Text -> T.Text -> H.Tx H.Postgres s ()
-postPaste u l c = do
-    p <- getPaste u
-    case p of
-        Just _ -> return ()
-        _ -> H.unit $ [H.q|INSERT INTO paste (paste_id,lang,contents)
-                                        VALUES (?,?,?) |] u l c
+-- postPaste :: UUID.UUID -> T.Text -> T.Text -> H.Tx H.Postgres s ()
+-- postPaste u l c = do
+--     p <- getPaste u
+--     case p of
+--         Just _ -> return ()
+--         _ -> H.unit $ [H.q|INSERT INTO paste (paste_id,lang,contents)
+--                                         VALUES (?,?,?) |] u l c
 
-patchPaste :: UUID.UUID -> T.Text -> H.Tx H.Postgres s ()
-patchPaste uid lang = H.unit $ [H.q|UPDATE paste SET lang = ? WHERE paste_id = ?|] lang uid
+-- patchPaste :: UUID.UUID -> T.Text -> H.Tx H.Postgres s ()
+-- patchPaste uid lang = H.unit $ [H.q|UPDATE paste SET lang = ? WHERE paste_id = ?|] lang uid
 
-getConnInfo :: IO H.Postgres
-getConnInfo = do
-    uri <- lookupEnv "POSTGRESQL_ADDON_URI"
-    case H.StringSettings . B8.pack <$> uri of
-        Just p -> return p
-        Nothing -> fail "Could not get connection info from environment"
