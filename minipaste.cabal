@@ -1,5 +1,5 @@
 name:                minipaste
-version:             0.5.2.1
+version:             0.5.3
 synopsis:            Minimal pastebin-like service
 description:         Minipaste is a small service built on top of scotty, highlighting-kate and hasql
 license:             BSD3
@@ -22,11 +22,11 @@ source-repository head
 executable minipaste
   hs-source-dirs:      src
   main-is:             Main.hs
-  build-depends:       base >=4.7 && <= 4.8,
+  build-depends:       base >=4.7 && <= 4.9,
                        blaze-html >= 0.7,
                        bytestring >=0.10,
-                       hasql == 0.4.*,
-                       hasql-postgres == 0.8.*,
+                       hasql >= 0.4,
+                       hasql-postgres >= 0.8,
                        highlighting-kate >= 0.5,
                        http-types >= 0.8,
                        mtl >= 2.1,
