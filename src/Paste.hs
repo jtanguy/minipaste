@@ -18,7 +18,6 @@ import qualified Data.Text.Lazy                as TL
 import           Data.Time.Clock
 import           Data.Time.Format
 import qualified Data.UUID                     as UUID
-import           System.Locale hiding (defaultTimeLocale)
 import           Text.Blaze.Html               (toHtml)
 import           Text.Blaze.Html.Renderer.Text (renderHtml)
 import           Text.Blaze.Html5              as H hiding (param)
