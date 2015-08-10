@@ -25,7 +25,7 @@ executable minipaste
   build-depends:       base >=4.7 && <= 4.9,
                        blaze-html >= 0.7,
                        bytestring >=0.10,
-                       hasql >= 0.4,
+                       hasql >= 0.7,
                        hasql-postgres >= 0.8,
                        highlighting-kate >= 0.5,
                        http-types >= 0.8,
