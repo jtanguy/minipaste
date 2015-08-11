@@ -4,7 +4,7 @@
 }:
 mkDerivation {
   pname = "minipaste";
-  version = "0.5.4";
+  version = "0.5.5";
   src = ./.;
   isLibrary = false;
   isExecutable = true;
