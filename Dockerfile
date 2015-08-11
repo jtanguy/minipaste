@@ -6,7 +6,7 @@ WORKDIR /opt/minipaste
 
 RUN stack setup
 
-RUN stack build --only-snapshot
+RUN stack build --only-snapshot --jobs 2
 
 RUN stack build
 
