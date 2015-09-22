@@ -17,14 +17,14 @@ module Paste where
 
 import           Control.Monad
 import qualified Data.Text                   as T
-import qualified Data.Text.Lazy.Encoding          as TE
+import qualified Data.Text.Encoding          as TE
 import qualified Data.Text.Lazy              as TL
 import           Data.Time.Clock
 import           Data.Time.Format
 import qualified Data.UUID                   as UUID
-import           System.Locale               hiding (defaultTimeLocale)
 import           GHC.Generics
 import           Language.Haskell.TH
+import           System.Locale               hiding (defaultTimeLocale)
 import           Text.Blaze.Html5            as H hiding (param)
 import           Text.Blaze.Html5.Attributes as A
 import qualified Text.Highlighting.Kate      as Kate
@@ -38,7 +38,9 @@ data Paste = Paste { pasteId      :: UUID.UUID
 $(return <$> dataD (cxt []) (mkName "Lang") [] (fmap (\n -> normalC (mkName n) []) Kate.languages) [''Eq, ''Show, ''Read, ''Generic])
 
 data Style = Pygments | Kate | Espresso | Tango | Haddock | Monochrome | Zenburn
-  deriving (Eq, Show)
+  deriving (Eq, Show, Read, Generic)
+
+type StyledPaste = (Paste, Style)
 
 getStyle :: Style -> Kate.Style
 getStyle Pygments = Kate.pygments
@@ -53,13 +55,39 @@ instance H.ToMarkup Paste where
   toMarkup (Paste _ lang code _) = Kate.formatHtmlBlock Kate.defaultFormatOpts{Kate.numberLines=True}
                                  $ Kate.highlightAs (T.unpack lang) (T.unpack code)
 
+instance H.ToMarkup StyledPaste where
+  toMarkup (p,s) = do
+    H.head $ H.style ! A.type_ (toValue ("text/css" :: String))
+           $ toHtml $ Kate.styleToCss (getStyle s)
+    H.body $ toMarkup p
+
 instance H.ToMarkup [Paste] where
-  toMarkup ps = H.table $ do
+  toMarkup ps = H.body $ H.table $ do
            H.thead $ H.tr $ sequence_ [td "Paste" , td "Lang", td "Created at"]
            H.tbody $ forM_ ps pasteLine
     where
       pasteLine (Paste u l _ c) = H.tr $ do
         H.td $ H.a ! href (toValue $ UUID.toString u) $ toHtml (UUID.toString u)
-        H.td $ toHtml l
+        H.td $ H.a ! href (toValue ("/?lang=" ++ T.unpack l) ) $ toHtml l
         H.td $ toHtml $ formatTime defaultTimeLocale "%F %T %Z" c
 
+
+
+-- formatPaste :: Paste -> Style -> TL.Text
+-- formatPaste (Paste _ lang code _) style = renderHtml $ do
+--     H.head $ H.style ! A.type_ (toValue ("text/css" :: String))
+--            $ toHtml $ styleToCss style
+--     H.body $ toHtml
+--            $ formatHtmlBlock defaultFormatOpts{numberLines=True}
+--            $ highlightAs (T.unpack lang) (T.unpack code)
+
+-- formatPasteList :: [Paste] -> TL.Text
+-- formatPasteList pastes = renderHtml $ do
+--     H.body $ toHtml $ H.table $ do
+--            H.thead $ H.tr $ sequence_ [td "Paste" , td "Lang", td "Created at"]
+--            H.tbody $ forM_ pastes pasteLine
+--   where
+--     pasteLine (Paste u l _ c) = tr $ do
+--         td $ a ! href (toValue $ UUID.toString u) $ toHtml (UUID.toString u)
+--         td $ toHtml l
+--         td $ toHtml $ formatTime defaultTimeLocale "%F %T %Z" c

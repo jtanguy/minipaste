@@ -14,6 +14,7 @@ Portability : portable
 module Util where
 
 import qualified Data.ByteString.Lazy as B
+import           Data.Char
 import qualified Data.Text            as T
 import qualified Data.Text.Encoding   as TE
 import qualified Data.UUID            as UUID
@@ -27,7 +28,17 @@ instance FromText UUID.UUID where
   fromText = UUID.fromString . T.unpack
 
 instance FromText Lang where
-  fromText = readMaybe . T.unpack
+  fromText = readMaybe . fixCase . T.unpack
+    where
+      fixCase (c:cs) = toUpper c : cs
+
+instance ToText Lang where
+  toText = T.pack . map toLower . show
+
+instance FromText Style where
+  fromText = readMaybe . fixCase . T.unpack
+    where
+      fixCase (c:cs) = toUpper c : cs
 
 instance ToText UUID.UUID where
   toText = T.pack . UUID.toString

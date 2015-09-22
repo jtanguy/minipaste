@@ -1,4 +1,4 @@
-{-#LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-|
 Module      : Config
 Copyright   : (c) 2015 Julien Tanguy
@@ -14,13 +14,13 @@ Portability : portable
 module Config where
 
 
+import qualified Data.ByteString.Char8    as B8
+import qualified Data.ByteString.Lazy     as B
 import qualified Data.UUID                as UUID
-import qualified Data.ByteString.Char8 as B8
 import qualified Data.UUID.V5             as UUID
 import qualified Hasql                    as H
 import qualified Hasql.Postgres           as H
 import           Network.Wai.Handler.Warp
-import qualified Data.ByteString.Lazy       as B
 import           System.Environment
 
 nsMinipaste :: UUID.UUID

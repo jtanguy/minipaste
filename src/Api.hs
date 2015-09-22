@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes        #-}
 {-# LANGUAGE TypeFamilies      #-}
-{-# LANGUAGE RankNTypes      #-}
 {-# LANGUAGE TypeOperators     #-}
 {-|
 Module      : Api
@@ -17,24 +17,29 @@ Portability : portable
 -}
 module Api where
 
-import Control.Monad.Reader
+import           Control.Monad.Reader
 import           Control.Monad.Trans.Either
+import qualified Data.ByteString            as B
+import           Data.Char
+import qualified Data.Text                  as T
+import qualified Data.Text.Encoding         as T
+import qualified Data.UUID                  as UUID
+import qualified Data.UUID.V5               as UUID
+import           Network.Wai
 import           Servant
 import           Servant.HTML.Blaze
-import qualified Data.UUID                as UUID
-import qualified Data.UUID.V5             as UUID
-import           Network.Wai
 
-import Config
-import Database
-import Paste
-import Util
+import           Config
+import           Database
+import           Paste
+import           Util
 
 type AppM = ReaderT Config (EitherT ServantErr IO)
 
 type PasteAPI = QueryParam "lang" Lang :> Get '[HTML] [Paste]
-            :<|> Capture "pasteid" UUID.UUID :> Get '[HTML, PlainText] Paste
-            -- :<|> Capture "lang" Lang :> ReqBody '[FormUrlEncoded] Paste :> Post '[HTML] Paste
+            :<|> Capture "pasteid" UUID.UUID :> QueryParam "style" Style :> Get '[HTML] StyledPaste
+            :<|> Capture "pasteid" UUID.UUID :> "raw" :> Get '[PlainText] Paste
+            :<|> Capture "lang" Lang :> ReqBody '[PlainText] T.Text :> Post '[HTML] Paste
 
 pasteAPI :: Proxy PasteAPI
 pasteAPI = Proxy
@@ -51,18 +56,33 @@ readerToEither cfg = Nat $ \x -> runReaderT x cfg
 server :: ServerT PasteAPI AppM
 server = list
     :<|> paste
-    -- :<|> create
+    :<|> pasteRaw
+    :<|> create
 
 
 list :: Maybe Lang -> AppM [Paste]
-list l = runHasql (getPastes (fmap show l))
+list l = runHasql (getPastes (fmap toText l))
 
-paste :: UUID.UUID -> AppM Paste
-paste u = do
+paste :: UUID.UUID -> Maybe Style -> AppM StyledPaste
+paste u s = do
+    p <- runHasql (getPaste u)
+    case (p, s) of
+        (Just paste, Nothing) -> return (paste, Haddock)
+        (Just paste, Just style) -> return (paste, style)
+        (Nothing,_) -> lift $ left err404
+
+pasteRaw :: UUID.UUID -> AppM Paste
+pasteRaw u = do
     p <- runHasql (getPaste u)
     case p of
         Just paste -> return paste
         Nothing -> lift $ left err404
+
+create :: Lang -> T.Text -> AppM Paste
+create l c = do
+    let uid = UUID.generateNamed nsMinipaste (B.unpack (T.encodeUtf8 c))
+    runHasql (postPaste uid (toText l) c)
+
 
 -- main :: IO ()
 -- main = do

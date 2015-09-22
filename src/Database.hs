@@ -1,8 +1,8 @@
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE QuasiQuotes           #-}
-{-# LANGUAGE RankNTypes           #-}
-{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-|
 Module      : Database
@@ -18,21 +18,21 @@ Database abstractions
 -}
 module Database where
 
-import qualified Data.ByteString.Lazy.Char8 as LB8
 import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.Reader
 import           Control.Monad.Trans.Either
+import qualified Data.ByteString.Lazy.Char8 as LB8
 import           Data.Maybe
-import qualified Data.Text             as T
+import qualified Data.Text                  as T
 import           Data.Time.Clock
-import qualified Data.UUID             as UUID
-import qualified Hasql                 as H
-import qualified Hasql.Postgres        as H
+import qualified Data.UUID                  as UUID
+import qualified Hasql                      as H
+import qualified Hasql.Postgres             as H
+import           Servant
 import           System.Environment
-import Servant
 
-import Config
+import           Config
 import           Paste
 
 type DBIO a = Config -> IO (Either (H.SessionError H.Postgres) a)
@@ -63,13 +63,16 @@ getPastes :: Maybe T.Text -> H.Tx H.Postgres s [Paste]
 getPastes (Just l) = fmap (fmap toPaste) <$> H.listEx $ [H.stmt|SELECT paste_id, lang, contents, created_at FROM paste WHERE lang = ?|] l
 getPastes Nothing  = fmap (fmap toPaste) <$> H.listEx $ [H.stmt|SELECT paste_id, lang, contents, created_at FROM paste|]
 
--- postPaste :: UUID.UUID -> T.Text -> T.Text -> H.Tx H.Postgres s ()
--- postPaste u l c = do
---     p <- getPaste u
---     case p of
---         Just _ -> return ()
---         _ -> H.unit $ [H.q|INSERT INTO paste (paste_id,lang,contents)
---                                         VALUES (?,?,?) |] u l c
+postPaste :: UUID.UUID -> T.Text -> T.Text -> H.Tx H.Postgres s Paste
+postPaste u l c = do
+    p <- getPaste u
+    case p of
+        Just paste -> return paste
+        Nothing -> fmap toPaste <$> H.singleEx $ [H.stmt|
+                                INSERT INTO paste (paste_id,lang,contents)
+                                VALUES (?,?,?)
+                                RETURNING paste_id,lang,contents,created_at
+                               |] u l c
 
 -- patchPaste :: UUID.UUID -> T.Text -> H.Tx H.Postgres s ()
 -- patchPaste uid lang = H.unit $ [H.q|UPDATE paste SET lang = ? WHERE paste_id = ?|] lang uid

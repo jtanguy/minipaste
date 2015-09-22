@@ -11,31 +11,33 @@ Minimal pastebin service, powered by Servant, Blaze, and Hasql
 -}
 module Main where
 
-import Control.Monad.Reader
-import Control.Exception
 import           Control.Applicative
-import Control.Exception
+import           Control.Exception
 import           Control.Monad
+import           Control.Monad.Reader
 import           Control.Monad.Trans.Either
 import qualified Data.ByteString.Lazy       as B
+import qualified Data.ByteString.Lazy.Char8 as B8
 import           Data.Monoid
-import qualified Data.Text             as T
-import qualified Data.Text.Encoding    as TE
+import qualified Data.Text                  as T
+import qualified Data.Text.Encoding         as TE
 import qualified Data.Traversable           as Tr
 import qualified Data.UUID                  as UUID
 import qualified Data.UUID.V5               as UUID
+import qualified Hasql                      as H
+import qualified Hasql.Postgres             as H
+import           Network.HTTP.Types.Status
 import           Network.Wai
 import           Network.Wai.Handler.Warp
 import           Servant
 import           Servant.HTML.Blaze
-import qualified Hasql                    as H
-import qualified Hasql.Postgres           as H
+import           Servant.Server
 
+import           Api
+import           Config
 import           Database
 import           Paste
-import Config
-import Api
-import Util
+import           Util
 
 
 hasqlHandler :: Either (H.SessionError H.Postgres) Response -> Response
