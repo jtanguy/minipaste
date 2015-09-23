@@ -73,23 +73,3 @@ instance H.ToMarkup [Paste] where
         H.td $ H.a ! href (toValue ("/?lang=" ++ T.unpack l) ) $ toHtml l
         H.td $ toHtml $ formatTime defaultTimeLocale "%F %T %Z" c
 
-
-
--- formatPaste :: Paste -> Style -> TL.Text
--- formatPaste (Paste _ lang code _) style = renderHtml $ do
---     H.head $ H.style ! A.type_ (toValue ("text/css" :: String))
---            $ toHtml $ styleToCss style
---     H.body $ toHtml
---            $ formatHtmlBlock defaultFormatOpts{numberLines=True}
---            $ highlightAs (T.unpack lang) (T.unpack code)
-
--- formatPasteList :: [Paste] -> TL.Text
--- formatPasteList pastes = renderHtml $ do
---     H.body $ toHtml $ H.table $ do
---            H.thead $ H.tr $ sequence_ [td "Paste" , td "Lang", td "Created at"]
---            H.tbody $ forM_ pastes pasteLine
---   where
---     pasteLine (Paste u l _ c) = tr $ do
---         td $ a ! href (toValue $ UUID.toString u) $ toHtml (UUID.toString u)
---         td $ toHtml l
---         td $ toHtml $ formatTime defaultTimeLocale "%F %T %Z" c
