@@ -62,8 +62,10 @@ instance H.ToMarkup StyledPaste where
     H.body $ toMarkup p
 
 instance H.ToMarkup [Paste] where
-  toMarkup ps = H.body $ H.table $ do
-           H.thead $ H.tr $ sequence_ [td "Paste" , td "Lang", td "Created at"]
+  toMarkup ps = do
+    H.head $ H.link ! A.rel "stylesheet" ! A.type_ "text/css" ! A.href "http://groundfloor.neocities.org/default.css"
+    H.body $ H.table $ do
+           H.thead $ H.tr $ sequence_ [th "Paste" , th "Lang", th "Created at"]
            H.tbody $ forM_ ps pasteLine
     where
       pasteLine (Paste u l _ c) = H.tr $ do
