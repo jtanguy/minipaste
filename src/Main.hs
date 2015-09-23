@@ -47,6 +47,8 @@ hasqlHandler (Left err) = responseLBS status500 [] (B8.pack . show $ err)
 main :: IO ()
 main = do
   port <- getPortEnv
+  putStr "Hello world ! This is minipaste, running on port "
+  print port
   info <- getConnInfo
   poolSettings <- getPoolSettings
   bracket (H.acquirePool info poolSettings) H.releasePool $ \pool -> do
