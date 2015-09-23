@@ -41,5 +41,6 @@ executable minipaste
                        servant-server,
                        wai,
                        warp,
+                       aeson,
                        either
   default-language:    Haskell2010

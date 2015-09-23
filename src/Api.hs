@@ -40,6 +40,7 @@ type PasteAPI = QueryParam "lang" Lang :> Get '[HTML] [Paste]
             :<|> Capture "pasteid" UUID.UUID :> QueryParam "style" Style :> Get '[HTML] StyledPaste
             :<|> Capture "pasteid" UUID.UUID :> "raw" :> Get '[PlainText] Paste
             :<|> Capture "lang" Lang :> ReqBody '[PlainText] T.Text :> Post '[HTML] Paste
+            :<|> "langs" :> Get '[JSON] [Lang]
 
 pasteAPI :: Proxy PasteAPI
 pasteAPI = Proxy
@@ -58,6 +59,7 @@ server = list
     :<|> paste
     :<|> pasteRaw
     :<|> create
+    :<|> langs
 
 
 list :: Maybe Lang -> AppM [Paste]
@@ -83,6 +85,8 @@ create l c = do
     let uid = UUID.generateNamed nsMinipaste (B.unpack (T.encodeUtf8 c))
     runHasql (postPaste uid (toText l) c)
 
+langs :: AppM [Lang]
+langs = return [minBound .. maxBound]
 
 -- main :: IO ()
 -- main = do
