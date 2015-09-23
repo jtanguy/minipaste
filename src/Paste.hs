@@ -16,6 +16,7 @@ Paste definitions and views
 module Paste where
 
 import           Control.Monad
+import           Data.Aeson
 import qualified Data.Text                   as T
 import qualified Data.Text.Encoding          as TE
 import qualified Data.Text.Lazy              as TL
@@ -35,10 +36,14 @@ data Paste = Paste { pasteId      :: UUID.UUID
                    , createdAt    :: UTCTime
                    } deriving (Eq, Show, Generic)
 
-$(return <$> dataD (cxt []) (mkName "Lang") [] (fmap (\n -> normalC (mkName n) []) Kate.languages) [''Eq, ''Show, ''Read, ''Generic])
+$(return <$> dataD (cxt []) (mkName "Lang") [] (fmap (\n -> normalC (mkName n) []) Kate.languages) [''Eq, ''Show, ''Read, ''Enum, ''Bounded, ''Generic])
+
+instance ToJSON Lang
 
 data Style = Pygments | Kate | Espresso | Tango | Haddock | Monochrome | Zenburn
-  deriving (Eq, Show, Read, Generic)
+  deriving (Eq, Show, Read, Enum, Bounded, Generic)
+
+instance ToJSON Style
 
 type StyledPaste = (Paste, Style)
 
@@ -59,7 +64,13 @@ instance H.ToMarkup StyledPaste where
   toMarkup (p,s) = do
     H.head $ H.style ! A.type_ (toValue ("text/css" :: String))
            $ toHtml $ Kate.styleToCss (getStyle s)
-    H.body $ toMarkup p
+    H.body $ do
+            H.label $ do
+              toHtml ("Highlighting style: " :: String)
+              H.select ! A.onchange "document.location.search='style='+this.value" $ 
+                sequence_ $ fmap (\st -> ((H.option !? (s== st,A.selected "")) $ toHtml . show $ st)) ([minBound .. maxBound] :: [Style])
+            H.a ! A.href (toValue ("./"++ show (pasteId p) ++ "/raw")) $ toHtml ("raw" :: String)
+            toMarkup p
 
 instance H.ToMarkup [Paste] where
   toMarkup ps = do
