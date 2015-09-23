@@ -1,4 +1,4 @@
-FROM fpco/stack-build:lts-3.4
+FROM fpco/stack-build:lts-3.6
 ADD . /opt/minipaste
 WORKDIR /opt/minipaste
 RUN stack setup
