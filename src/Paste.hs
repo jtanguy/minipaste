@@ -36,7 +36,7 @@ data Paste = Paste { pasteId      :: UUID.UUID
                    , createdAt    :: UTCTime
                    } deriving (Eq, Show, Generic)
 
-$(return <$> dataD (cxt []) (mkName "Lang") [] (fmap (\n -> normalC (mkName n) []) Kate.languages) [''Eq, ''Show, ''Read, ''Enum, ''Bounded, ''Generic])
+$(return <$> dataD (cxt []) (mkName "Lang") [] (fmap (\n -> normalC (mkName n) []) ("Plaintext":Kate.languages)) [''Eq, ''Show, ''Read, ''Enum, ''Bounded, ''Generic])
 
 instance ToJSON Lang
 
